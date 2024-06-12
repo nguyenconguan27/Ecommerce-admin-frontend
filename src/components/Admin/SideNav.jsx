@@ -52,36 +52,36 @@ function SideNav(props) {
           component={<Link to={"/"} />}
           icon={<DashboardOutlinedIcon />}
         >
-          <Typography variant="body2">Dashboard</Typography>
+          <Typography variant="body2">Thống kê</Typography>
         </MenuItem>
         <MenuItem
           active={location.pathname === "/bill"}
           component={<Link to={"/bill"} />}
           icon={<PaymentIcon />}
         >
-          <Typography variant="body2">Content</Typography>
+          <Typography variant="body2">Hoá đơn</Typography>
         </MenuItem>
         <MenuItem
           active={location.pathname === "/productmanager"}
           component={<Link to={"/productmanager"} />}
           icon={<Inventory2OutlinedIcon />}
         >
-          <Typography variant="body2">Product</Typography>
+          <Typography variant="body2">Sản phẩm</Typography>
         </MenuItem>
         <MenuItem
           active={location.pathname === "/usermanager"}
           component={<Link to={"/usermanager"} />}
           icon={<PersonOutlineOutlinedIcon />}
         >
-          <Typography variant="body2"> User</Typography>
+          <Typography variant="body2"> Khách Hàng</Typography>
         </MenuItem>
-        <MenuItem
+        {/* <MenuItem
           active={location.pathname === "/category"}
           component={<Link to={"/category"} />}
           icon={<CategoryOutlinedIcon />}
         >
-          <Typography variant="body2">Category</Typography>
-        </MenuItem>
+          <Typography variant="body2">Danh mục</Typography>
+        </MenuItem> */}
       </Menu>
     </Sidebar>
   );
