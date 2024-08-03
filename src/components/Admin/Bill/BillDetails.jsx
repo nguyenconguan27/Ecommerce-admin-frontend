@@ -13,16 +13,32 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import {
-  dateTranfer,
-  formatCurrency,
-  formatNumberToSocialStyle,
-} from "../../../utils/utils";
+import { dateTranfer, formatCurrency } from "../../../utils/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import config from "../../../constants/config";
 function BillDetails({ setDisplayBillDetails, receipt }) {
   const handleCloseBillDetails = () => {
     setDisplayBillDetails(false);
   };
-  console.log(receipt);
+  const queryClient = useQueryClient();
+
+  const approveMutation = useMutation({
+    mutationFn: () =>
+      axios.post(
+        `${config.BASEURL}/receipt/approved?receipt_id=${Number(
+          receipt.id.substring(2)
+        )}&action=${1}`
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["receipt"] });
+      setDisplayBillDetails(false);
+    },
+  });
+
+  const handelApprove = () => {
+    approveMutation.mutate();
+  };
   return (
     <Box sx={style.coverer}>
       <Box sx={style.addUserModal}>
@@ -35,35 +51,33 @@ function BillDetails({ setDisplayBillDetails, receipt }) {
           Chi tiết hóa đơn
         </Typography>
         <Grid sx={style.form} container rowSpacing={2} columnSpacing={2}>
-          <Grid xs={12} sm={12} md={7}>
+          <Grid sx={12} sm={12} md={4}>
             <Grid item xs={12} sm={12} md={12} sx={style.infoContainer}>
-              <Box sx={style.infoContainer.infoCustomer}>
+              <Box sx={style.infoContainer.infoBill}>
                 <Box sx={style.infoLabel}>
-                  <Box sx={style.infoLabel.infoCustomerLabelText}>
+                  <Box sx={style.infoLabel.infoBillLabelText}>
                     Tên khách hàng:{" "}
                   </Box>
                 </Box>
-                <Box sx={style.infoText}>{receipt.username}</Box>
+                <Box sx={style.infoText}>{receipt.customerDTO.username}</Box>
               </Box>
-              <Box sx={style.infoContainer.infoCustomer}>
+              <Box sx={style.infoContainer.infoBill}>
                 <Box sx={style.infoLabel}>
-                  <Box sx={style.infoLabel.infoCustomerLabelText}>
+                  <Box sx={style.infoLabel.infoBillLabelText}>
                     Số điện thoại:{" "}
                   </Box>
                 </Box>
                 <Box sx={style.infoText}>{receipt.shippingInfoDTO.number}</Box>
               </Box>
-              <Box sx={style.infoContainer.infoCustomer}>
+              <Box sx={style.infoContainer.infoBill}>
                 <Box sx={style.infoLabel}>
-                  <Box sx={style.infoLabel.infoCustomerLabelText}>
-                    Địa chỉ:{" "}
-                  </Box>
+                  <Box sx={style.infoLabel.infoBillLabelText}>Đia chỉ: </Box>
                 </Box>
                 <Box sx={style.infoText}>{receipt.shippingInfoDTO.address}</Box>
               </Box>
             </Grid>
           </Grid>
-          <Grid sx={0} sm={0} md={1}></Grid>
+          <Grid sx={0} sm={0} md={4}></Grid>
           <Grid sx={12} sm={12} md={4}>
             <Grid item xs={12} sm={12} md={12} sx={style.infoContainer}>
               <Box sx={style.infoContainer.infoBill}>
@@ -106,6 +120,9 @@ function BillDetails({ setDisplayBillDetails, receipt }) {
                   Số lượng
                 </TableCell>
                 <TableCell size="small" align="center">
+                  Kích thước
+                </TableCell>
+                <TableCell size="small" align="center">
                   Thành tiền
                 </TableCell>
               </TableRow>
@@ -127,6 +144,9 @@ function BillDetails({ setDisplayBillDetails, receipt }) {
                       {order.quantity}
                     </TableCell>
                     <TableCell size="small" align="center">
+                      {order.size}
+                    </TableCell>
+                    <TableCell size="small" align="center">
                       {formatCurrency(order.quantity * order.price)}
                     </TableCell>
                   </TableRow>
@@ -135,6 +155,24 @@ function BillDetails({ setDisplayBillDetails, receipt }) {
             </TableBody>
           </Table>
         </TableContainer>
+        {receipt && receipt.status === "Đang chờ" && (
+          <Box
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              paddingRight: "15px",
+            }}
+          >
+            <Button
+              variant="contained"
+              color="success"
+              type="submit"
+              onClick={handelApprove}
+            >
+              Duyệt đơn
+            </Button>
+          </Box>
+        )}
       </Box>
     </Box>
   );

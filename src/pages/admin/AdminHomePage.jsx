@@ -16,12 +16,9 @@ import AppHeader from "../../components/Admin/AppHeader.jsx";
 import { Routes, Route } from "react-router-dom";
 import {
   Dashboard,
-  Promotion,
   UserManager,
   ProductManager,
-  Voucher,
   Bill,
-  Category,
 } from "../../routes/AdminRouter.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -44,7 +41,6 @@ function AdminHomePage() {
                 <Route path="/bill" element={<Bill />} />
                 <Route path="/productmanager" element={<ProductManager />} />
                 <Route path="/usermanager" element={<UserManager />} />
-                <Route path="/category" element={<Category />} />
               </Routes>
             </Suspense>
           </Box>

@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require("tailwindcss/plugin");
 module.exports = {
   content: ["./src/**/*.{html,js,jsx}"],
   mode: "jit",
@@ -30,6 +31,11 @@ module.exports = {
         1: 1,
         "-1": -1,
       },
+      colors: {
+        pink: "#e9c7ff",
+        pink2: "#b229c4",
+        pink3: "#f2d7f7",
+      },
     },
     boxShadow: {
       headerShadow: "0 1rem 3rem 0 rgba(0,0,0,.1)",
@@ -38,5 +44,17 @@ module.exports = {
       3: "-2px 0 3px 0 #fafafa",
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function ({ addComponents, theme }) {
+      addComponents({
+        ".container": {
+          maxWidth: theme("columns.7xl"),
+          marginLeft: "auto",
+          marginRight: "auto",
+          paddingLeft: theme("spacing.4"),
+          paddingRight: theme("spacing.4"),
+        },
+      });
+    }),
+  ],
 };

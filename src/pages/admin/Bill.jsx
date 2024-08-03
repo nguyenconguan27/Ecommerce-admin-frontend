@@ -3,19 +3,55 @@ import React, { useState } from "react";
 import TabPanel from "../../components/Admin/TabPanel";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ReplayIcon from "@mui/icons-material/Replay";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import BillDetails from "../../components/Admin/Bill/BillDetails";
-import { useQuery } from "@tanstack/react-query";
+import PortableWifiOffIcon from "@mui/icons-material/PortableWifiOff";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios from "axios";
 import config from "../../constants/config";
 import { dateTranfer, formatCurrency } from "../../utils/utils";
+import { toast } from "react-toastify";
+import { Padding } from "@mui/icons-material";
 
 function Bill() {
   const { data: receiptData } = useQuery({
     queryKey: ["receipt"],
     queryFn: () => axios.get(`${config.BASEURL}/receipt/get-all`),
   });
+  const cancelMutation = useMutation({
+    mutationFn: (receiptId) =>
+      axios.put(
+        `${config.BASEURL}/receipt/update-status?receiptId=${receiptId}&action=0`
+      ),
+  });
+  const approveMutation = useMutation({
+    mutationFn: (receiptId) =>
+      axios.post(
+        `${config.BASEURL}/receipt/approved?receipt_id=${receiptId}&action=1`
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["receipt"] });
+      setDisplayBillDetails(false);
+    },
+  });
+  const notReceiveMutation = useMutation({
+    mutationFn: (receiptId) =>
+      axios.put(
+        `${config.BASEURL}/receipt/update-status?receiptId=${receiptId}&action=5`
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["receipt"] });
+    },
+  });
   console.log(receiptData);
+  const queryClient = useQueryClient();
   const [detail, setDetail] = useState(null);
   const columns = [
     {
@@ -45,7 +81,6 @@ function Bill() {
         return params.row.payMethod === 1 ? "Thanh toán qua thẻ" : "Trực tiếp";
       },
     },
-
     {
       field: "total",
       headerName: "Tổng tiền",
@@ -55,15 +90,34 @@ function Bill() {
       },
     },
     {
+      field: "score",
+      headerName: "Điểm khách hàng",
+      maxWidth: "100",
+      style: {
+        textAlign: "center",
+        display: "flex",
+        justifyContent: "center",
+      },
+      valueGetter: (_, row) => row.customerDTO.score,
+    },
+    {
       field: "action",
       headerName: "Tác vụ",
-      minWidth: "140",
+      minWidth: "120",
       sortable: false,
       headerAlign: "center",
       renderCell: (params) => {
         return (
           <Box
-            style={{ display: "flex", justifyContent: "center", width: "100%" }}
+            style={{
+              display: "flex",
+              justifyContent:
+                params.row.status === "Đã nhận" ||
+                params.row.status === "Không nhận hàng"
+                  ? "center"
+                  : "start",
+              width: "100%",
+            }}
           >
             <IconButton
               size="medium"
@@ -75,9 +129,56 @@ function Bill() {
             >
               <InfoOutlinedIcon />
             </IconButton>
-            <IconButton size="medium" sx={{ m: 1 }}>
-              <CancelOutlined />
-            </IconButton>
+            {params.row.status === "Đang chờ" && params.row.payMethod === 2 && (
+              <IconButton size="medium" sx={{ m: 1 }}>
+                <CancelOutlined
+                  onClick={() => {
+                    cancelMutation.mutate(Number(params.row.id.substring(2)), {
+                      onSuccess: () => {
+                        toast.info("Từ chối đơn hàng thành công");
+                        queryClient.invalidateQueries({
+                          queryKey: ["receipt"],
+                        });
+                      },
+                    });
+                  }}
+                />
+              </IconButton>
+            )}
+            {params.row.status === "Đã huỷ" && (
+              <IconButton size="medium" sx={{ m: 1 }}>
+                <ReplayIcon
+                  onClick={() => {
+                    approveMutation.mutate(Number(params.row.id.substring(2)), {
+                      onSuccess: () => {
+                        toast.info("Chấp thuận đơn hàng thành công");
+                        queryClient.invalidateQueries({
+                          queryKey: ["receipt"],
+                        });
+                      },
+                    });
+                  }}
+                />
+              </IconButton>
+            )}
+            {params.row.status === "Đã giao" && (
+              <IconButton size="medium" sx={{ m: 1 }}>
+                <PortableWifiOffIcon
+                  onClick={() => {
+                    notReceiveMutation.mutate(
+                      Number(params.row.id.substring(2)),
+                      {
+                        onSuccess: () => {
+                          queryClient.invalidateQueries({
+                            queryKey: ["receipt"],
+                          });
+                        },
+                      }
+                    );
+                  }}
+                />
+              </IconButton>
+            )}
           </Box>
         );
       },
@@ -88,7 +189,8 @@ function Bill() {
     if (status === 1) return "Đang chờ";
     else if (status === 2) return "Đã giao";
     else if (status === 3) return "Đã nhận";
-    else return "Đã huỷ";
+    else if (status === 4) return "Đã huỷ";
+    else return "Không nhận hàng";
   };
   console.log(receiptData);
 
@@ -109,14 +211,14 @@ function Bill() {
         id: "HD" + String(receipt.id),
         status: getStatus(receipt.status),
       });
-    } else if (receipt.status === 3) {
-      receiptsReceived.push({
+    } else if (receipt.status === 4) {
+      receiptsCancle.push({
         ...receipt,
         id: "HD" + String(receipt.id),
         status: getStatus(receipt.status),
       });
     } else {
-      receiptsCancle.push({
+      receiptsReceived.push({
         ...receipt,
         id: "HD" + String(receipt.id),
         status: getStatus(receipt.status),
@@ -134,7 +236,7 @@ function Bill() {
     <div>
       <Box>
         <Typography sx={style.pageTitle} variant="h5">
-          Quản lý người dùng
+          Quản lý hoá đơn
         </Typography>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={value} onChange={handleChange}>

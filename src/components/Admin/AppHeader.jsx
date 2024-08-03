@@ -1,9 +1,6 @@
 import { AppBar, Badge, Box, IconButton, Toolbar } from "@mui/material";
 import React from "react";
 import MenuTwoToneIcon from "@mui/icons-material/MenuTwoTone";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import SettingsIcon from "@mui/icons-material/Settings";
-import LogoutIcon from "@mui/icons-material/Logout";
 import logo from "../../assets/logo.png";
 function AppHeader(props) {
   const { sideNavExpanded, setSideNavExpanded } = props;
